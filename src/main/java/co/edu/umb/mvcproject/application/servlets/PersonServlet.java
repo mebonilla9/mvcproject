@@ -22,7 +22,14 @@ import java.util.List;
 /**
  * @author dev_manuel
  */
-@WebServlet(name = "PersonServlet", urlPatterns = {ERutas.Person.LIST, ERutas.Person.SAVE, ERutas.Person.EDIT, ERutas.Person.SEARCH, ERutas.Person.DELETE})
+@WebServlet(name = "PersonServlet",
+  urlPatterns = {
+    ERutas.Person.LIST,
+    ERutas.Person.SAVE,
+    ERutas.Person.EDIT,
+    ERutas.Person.SEARCH,
+    ERutas.Person.DELETE
+  })
 public class PersonServlet extends HttpServlet {
 
   /**
@@ -35,30 +42,23 @@ public class PersonServlet extends HttpServlet {
    * @throws IOException      if an I/O error occurs
    */
   protected void processRequest(HttpServletRequest request,
-                                HttpServletResponse response) throws ServletException, IOException {
+                                HttpServletResponse response){
     response.setContentType("text/html;charset=UTF-8");
     Connection cnn = null;
     PersonService personService;
     try {
       cnn = DbConnection.connect();
       personService = new PersonService(cnn);
-      switch (request.getServletPath()) {
-        case ERutas.Person.LIST:
-          listPeople(personService, request, response);
-          break;
-        case ERutas.Person.SAVE:
-          savePerson(personService, request, response);
-          break;
-        case ERutas.Person.EDIT:
-          editPerson(personService, request, response);
-          break;
-        case ERutas.Person.DELETE:
-          deletePerson(personService, request, response);
-          break;
-        default:
-          throw new AssertionError();
-      }
+      String path = switch (request.getServletPath()) {
+        case ERutas.Person.LIST -> listPeople(personService, request);
+        case ERutas.Person.SAVE -> savePerson(personService, request);
+        case ERutas.Person.EDIT -> editPerson(personService, request);
+        case ERutas.Person.DELETE -> deletePerson(personService, request);
+        case ERutas.Person.SEARCH -> searchPerson(personService, request);
+        default -> throw new AssertionError();
+      };
       DbConnection.commit(cnn);
+      request.getRequestDispatcher(path).forward(request, response);
     } catch (MvcProjectException | IOException | ServletException e) {
       e.printStackTrace(System.err);
     } finally {
@@ -104,40 +104,55 @@ public class PersonServlet extends HttpServlet {
     return "Short description";
   }// </editor-fold>
 
-  private void listPeople(PersonService personService,
-                          HttpServletRequest request, HttpServletResponse response) throws MvcProjectException,
+  private String listPeople(PersonService personService,
+                            HttpServletRequest request) throws MvcProjectException,
     ServletException, IOException {
     List<Person> people = personService.findAll();
     request.setAttribute("people", people);
-    request.getRequestDispatcher("/list.jsp").forward(request, response);
+    return "/list.jsp";
   }
 
-  private void savePerson(PersonService personService, HttpServletRequest request,
-                          HttpServletResponse response) throws MvcProjectException, ServletException, IOException {
+  private String savePerson(PersonService personService,
+                            HttpServletRequest request) throws MvcProjectException {
     Person person = new Person(request.getParameter("txtDocument"), request.getParameter("txtName"), 1);
     personService.save(person);
     request.setAttribute("alertMessage", "Una nueva persona ha sido registrada");
     request.setAttribute("alertType", "success");
-    request.getRequestDispatcher(ERutas.Person.LIST).forward(request, response);
+    return ERutas.Person.LIST;
   }
 
-  private void editPerson(PersonService personService, HttpServletRequest request,
-                          HttpServletResponse response) throws MvcProjectException, ServletException, IOException {
-    Integer idPerson = Integer.parseInt(request.getParameter("idPerson"));
-    Person person = personService.findById(idPerson);
-    request.setAttribute("person", person);
-    request.getRequestDispatcher("/edit.jsp").forward(request, response);
+  private String editPerson(PersonService personService,
+                            HttpServletRequest request) throws MvcProjectException {
+    Person person = new Person(
+      Integer.parseInt(request.getParameter("txtId")),
+      request.getParameter("txtDocument"),
+      request.getParameter("txtName"),
+      Integer.parseInt(request.getParameter("cbxState"))
+    );
+    personService.edit(person);
+    request.setAttribute("alertMessage", "Una persona ha sido editada");
+    request.setAttribute("alertType", "primary");
+    return ERutas.Person.LIST;
   }
 
-  private void deletePerson(PersonService personService,
-                            HttpServletRequest request, HttpServletResponse response) throws MvcProjectException, ServletException, IOException {
+  private String deletePerson(PersonService personService,
+                              HttpServletRequest request) throws MvcProjectException,
+    ServletException, IOException {
     Integer idPerson = Integer.parseInt(request.getParameter("idPerson"));
     Person person = personService.findById(idPerson);
     person.setState(0);
     personService.edit(person);
     request.setAttribute("alertMessage", "Una persona ha sido Borrada");
     request.setAttribute("alertType", "danger");
-    request.getRequestDispatcher(ERutas.Person.LIST).forward(request, response);
+    return ERutas.Person.LIST;
+  }
+
+  private String searchPerson(PersonService personService,
+                              HttpServletRequest request) throws MvcProjectException {
+    Integer idPerson = Integer.parseInt(request.getParameter("idPerson"));
+    Person person = personService.findById(idPerson);
+    request.setAttribute("person", person);
+    return "/edit.jsp";
   }
 
 }
