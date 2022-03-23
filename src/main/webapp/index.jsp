@@ -26,12 +26,12 @@
     </style>
   </head>
   <body>
-    <div class="align-items-center">
+    <div class="container-fluid">
       <div class="composed-div">
         <h1>Proyecto MVC con conexión a base de datos</h1>
       </div>
       <div class="composed-div">
-        <a href="person/list">Listar personas</a>
+        <a class="btn btn-success" href="person/list">Listar personas</a>
       </div>
     </div>
     <!-- Optional JavaScript -->

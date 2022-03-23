@@ -5,7 +5,7 @@
 package co.edu.umb.mvcproject.application.servlets;
 
 import co.edu.umb.mvcproject.application.exceptions.MvcProjectException;
-import co.edu.umb.mvcproject.application.lasting.ERutas;
+import co.edu.umb.mvcproject.application.lasting.ERoute;
 import co.edu.umb.mvcproject.application.services.PersonService;
 import co.edu.umb.mvcproject.persistence.db.DbConnection;
 import co.edu.umb.mvcproject.persistence.entities.Person;
@@ -24,11 +24,11 @@ import java.util.List;
  */
 @WebServlet(name = "PersonServlet",
   urlPatterns = {
-    ERutas.Person.LIST,
-    ERutas.Person.SAVE,
-    ERutas.Person.EDIT,
-    ERutas.Person.SEARCH,
-    ERutas.Person.DELETE
+    ERoute.Person.LIST,
+    ERoute.Person.SAVE,
+    ERoute.Person.EDIT,
+    ERoute.Person.SEARCH,
+    ERoute.Person.DELETE
   })
 public class PersonServlet extends HttpServlet {
 
@@ -50,11 +50,11 @@ public class PersonServlet extends HttpServlet {
       cnn = DbConnection.connect();
       personService = new PersonService(cnn);
       String path = switch (request.getServletPath()) {
-        case ERutas.Person.LIST -> listPeople(personService, request);
-        case ERutas.Person.SAVE -> savePerson(personService, request);
-        case ERutas.Person.EDIT -> editPerson(personService, request);
-        case ERutas.Person.DELETE -> deletePerson(personService, request);
-        case ERutas.Person.SEARCH -> searchPerson(personService, request);
+        case ERoute.Person.LIST -> listPeople(personService, request);
+        case ERoute.Person.SAVE -> savePerson(personService, request);
+        case ERoute.Person.EDIT -> editPerson(personService, request);
+        case ERoute.Person.DELETE -> deletePerson(personService, request);
+        case ERoute.Person.SEARCH -> searchPerson(personService, request);
         default -> throw new AssertionError();
       };
       DbConnection.commit(cnn);
@@ -109,16 +109,20 @@ public class PersonServlet extends HttpServlet {
     ServletException, IOException {
     List<Person> people = personService.findAll();
     request.setAttribute("people", people);
-    return "/list.jsp";
+    return ERoute.Person.LIST_PAGE;
   }
 
   private String savePerson(PersonService personService,
                             HttpServletRequest request) throws MvcProjectException {
-    Person person = new Person(request.getParameter("txtDocument"), request.getParameter("txtName"), 1);
+    Person person = new Person(
+      request.getParameter("txtDocument"),
+      request.getParameter("txtName"),
+      1
+    );
     personService.save(person);
     request.setAttribute("alertMessage", "Una nueva persona ha sido registrada");
     request.setAttribute("alertType", "success");
-    return ERutas.Person.LIST;
+    return ERoute.Person.LIST;
   }
 
   private String editPerson(PersonService personService,
@@ -132,7 +136,7 @@ public class PersonServlet extends HttpServlet {
     personService.edit(person);
     request.setAttribute("alertMessage", "Una persona ha sido editada");
     request.setAttribute("alertType", "primary");
-    return ERutas.Person.LIST;
+    return ERoute.Person.LIST;
   }
 
   private String deletePerson(PersonService personService,
@@ -144,7 +148,7 @@ public class PersonServlet extends HttpServlet {
     personService.edit(person);
     request.setAttribute("alertMessage", "Una persona ha sido Borrada");
     request.setAttribute("alertType", "danger");
-    return ERutas.Person.LIST;
+    return ERoute.Person.LIST;
   }
 
   private String searchPerson(PersonService personService,
@@ -152,7 +156,7 @@ public class PersonServlet extends HttpServlet {
     Integer idPerson = Integer.parseInt(request.getParameter("idPerson"));
     Person person = personService.findById(idPerson);
     request.setAttribute("person", person);
-    return "/edit.jsp";
+    return ERoute.Person.EDIT_PAGE;
   }
 
 }

@@ -26,11 +26,6 @@ public class DbConnection {
       Context ctx = new InitialContext();
       DataSource ds = (DataSource) ctx.lookup("java:comp/env/jdbc/MvcProjectDS");
       Connection cnn = ds.getConnection();
-      /*Connection cnn = DriverManager.getConnection(
-              "jdbc:postgresql://127.0.0.1:5432/management",
-              "dbmanagement",
-              "123456"
-      );*/
       cnn.setAutoCommit(false);
       return cnn;
     } catch (SQLException | NamingException e) {
